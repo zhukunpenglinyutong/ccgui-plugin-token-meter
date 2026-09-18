@@ -1,0 +1,5 @@
+{
+  "_source": "来源：源码推导（非真实录制）。claude.rs:157-167 — compact_boundary 时发射的占用快照（只含 postTokens），测试 claude.rs:900-960 佐证形状。",
+  "input_tokens": 8038,
+  "total_tokens": 8038
+}

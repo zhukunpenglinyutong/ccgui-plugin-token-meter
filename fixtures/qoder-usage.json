@@ -1,0 +1,6 @@
+{
+  "_source": "来源：源码推导（非真实录制）。qoder_session.rs:1016-1019 — ACP session/prompt result.usage 透传，源码未钉死字段集；按 ACP/JSON-RPC camelCase 约定取 inputTokens/outputTokens/totalTokens。",
+  "inputTokens": 4200,
+  "outputTokens": 260,
+  "totalTokens": 4460
+}

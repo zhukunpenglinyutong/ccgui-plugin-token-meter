@@ -1,0 +1,38 @@
+{
+  "id": "token-meter",
+  "name": "Token 速度表",
+  "version": "0.1.1",
+  "sdkVersion": "^0.3",
+  "minAppVersion": "1.0.5",
+  "author": "zhukunpenglinyutong",
+  "description": "composer 状态行实时显示 token 输出速度与缓存命中率（仿 deepseek-harness StatsPills），支持全部 11 个 CLI 引擎（claude/codex/kimi/grok/pi/omp/dsh/agy/opencode/qoder/qoder-cn）。",
+  "repo": "zhukunpenglinyutong/ccgui-plugin-token-meter",
+  "license": "MIT",
+  "keywords": ["token", "speed", "cache", "usage", "metrics"],
+  "tier": "js",
+  "permissions": ["events", "ui:composer-status", "theme", "storage"],
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "scope": {
+        "type": "string",
+        "title": "统计范围",
+        "description": "active = 只显示最近激活会话；all = 全部会话合计。",
+        "enum": ["active", "all"],
+        "default": "active"
+      },
+      "showSpeed": {
+        "type": "boolean",
+        "title": "显示速度 pill",
+        "description": "状态栏显示「轮/步 · tok/s」速度 pill。",
+        "default": true
+      },
+      "showCacheHit": {
+        "type": "boolean",
+        "title": "显示用量 pill",
+        "description": "状态栏显示「总 token · 缓存命中率」用量 pill。",
+        "default": true
+      }
+    }
+  }
+}

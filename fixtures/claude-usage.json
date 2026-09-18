@@ -1,0 +1,8 @@
+{
+  "_source": "来源：源码推导（非真实录制）。claude.rs:269-292 — result 行透传 Anthropic 计费 usage；cache 字段在 input_tokens 之外（宿主 usage.test.ts「keeps claude's cache tokens outside its input」佐证）。",
+  "input_tokens": 400,
+  "cache_read_input_tokens": 6000,
+  "cache_creation_input_tokens": 1500,
+  "output_tokens": 300,
+  "model_context_window": 200000
+}

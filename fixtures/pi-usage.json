@@ -1,0 +1,8 @@
+{
+  "_source": "来源：源码推导（非真实录制）。pi_family.rs:230-236 — message_end 的 message.usage 透传（pi/omp 同族）；裸键命名，cache 在 input 之外（宿主 usage.ts parseUsage 的 input/cacheRead/cacheWrite/totalTokens 分支佐证）。",
+  "input": 1200,
+  "output": 180,
+  "cacheRead": 5400,
+  "cacheWrite": 900,
+  "totalTokens": 7680
+}

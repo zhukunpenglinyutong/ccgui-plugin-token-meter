@@ -1,0 +1,92 @@
+/* Token 速度表：状态栏 chip + 详情面板。颜色只引用宿主 token 变量
+ * （desktop-cc-gui/src/styles/theme.css 的 --color-* 语义层），深浅色随宿主
+ * 自动翻转；不覆盖任何宿主元素。状态栏 h-7（28px）、text-caption-1-medium、
+ * text-text-tertiary 由宿主容器提供，chip 继承即可。 */
+
+.token-meter-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  /* composer 状态行容器不带字号类（h-[26px] 行内各控件自带），chip 对齐
+   *  分支标签的 caption-1 口径。 */
+  font-size: 12px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.token-meter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.token-meter-pill:hover {
+  background: var(--color-background-tertiary-hover, rgba(127, 127, 127, 0.15));
+}
+
+.token-meter-pill.is-open {
+  background: var(--color-background-tertiary-hover, rgba(127, 127, 127, 0.15));
+  color: var(--color-text-secondary, currentColor);
+}
+
+.token-meter-pill svg {
+  flex: none;
+  color: inherit;
+}
+
+/* 详情面板：绝对定位于 chip 上方；面板不开不建 DOM（ui.tsx 条件渲染）。 */
+.token-meter-panel {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  min-width: 220px;
+  padding: 8px 12px 10px;
+  border: 1px solid var(--color-separator-border, rgba(127, 127, 127, 0.3));
+  border-radius: 8px;
+  background: var(--color-background-primary-default, #fff);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  color: var(--color-text-secondary, inherit);
+  z-index: 50;
+}
+
+.token-meter-panel-title {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-primary, inherit);
+}
+
+.token-meter-panel dl {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+}
+
+.token-meter-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.token-meter-row dt {
+  color: var(--color-text-tertiary, inherit);
+}
+
+.token-meter-row dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary, inherit);
+}

@@ -1,0 +1,8 @@
+{
+  "_source": "来源：源码推导（非真实录制）。dsh_session.rs:361-365 — 流式 chunk 的 usage 透传；DeepSeek 线协议：prompt_tokens 含命中（= hit + miss），须减出 disjoint。",
+  "prompt_tokens": 9100,
+  "completion_tokens": 210,
+  "total_tokens": 9310,
+  "prompt_cache_hit_tokens": 8192,
+  "prompt_cache_miss_tokens": 908
+}

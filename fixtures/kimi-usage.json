@@ -1,0 +1,7 @@
+{
+  "_source": "来源：源码推导（非真实录制）。kimi.rs:86-88 — assistant 行 usage 原样透传；kimi CLI 走 OpenAI 兼容协议：prompt_tokens 含 cached_tokens（prompt_tokens_details 嵌套），须折出 disjoint。",
+  "prompt_tokens": 5200,
+  "completion_tokens": 640,
+  "total_tokens": 5840,
+  "prompt_tokens_details": { "cached_tokens": 4096 }
+}

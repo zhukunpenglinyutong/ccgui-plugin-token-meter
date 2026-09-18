@@ -1,0 +1,26 @@
+{
+  "name": "ccgui-plugin-token-meter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CC GUI 插件：状态栏 token 速度表（tok/s + 缓存命中率），支持全部 11 个引擎",
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "validate": "node scripts/validate-manifest.mjs",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.2",
+    "vite": "^6",
+    "vitest": "^3.2.4"
+  }
+}

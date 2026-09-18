@@ -1,0 +1,16 @@
+{
+  "_source": "来源：源码推导（非真实录制）。codex_usage.rs:190-199 测试字面量 — token_count 事件的 info 形状：total_token_usage 为会话累计、last_token_usage 为最近响应。宿主 parseUsage 优先 last_token_usage；本插件检测 total_token_usage 时走 cumulative-replace。",
+  "total_token_usage": {
+    "input_tokens": 50000,
+    "cached_input_tokens": 40000,
+    "output_tokens": 3000,
+    "total_tokens": 53000
+  },
+  "last_token_usage": {
+    "input_tokens": 4000,
+    "cached_input_tokens": 3000,
+    "output_tokens": 200,
+    "total_tokens": 4200
+  },
+  "model_context_window": 258400
+}

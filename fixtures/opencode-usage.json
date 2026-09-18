@@ -1,0 +1,6 @@
+{
+  "_source": "来源：源码推导（非真实录制）。opencode.rs:152-156 — step_finish 的 part.tokens 透传（opencode.rs:399 测试字面量 {input,output}；opencode 实际 tokens 另带 cache.{read,write} 嵌套，与 input 本就 disjoint）。",
+  "input": 10,
+  "output": 4,
+  "cache": { "read": 6400, "write": 512 }
+}

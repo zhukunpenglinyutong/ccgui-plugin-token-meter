@@ -1,0 +1,7 @@
+{
+  "_source": "来源：源码推导（非真实录制）。codex.rs:142-150 — turn.completed 的 usage（轮汇总，命名同 token_usage_record），经 done 事件 data.usage 到达。与逐响应事件同构，故 done 须按 fallback 策略跳过避免双计。",
+  "input_tokens": 8300,
+  "cached_input_tokens": 6000,
+  "output_tokens": 1200,
+  "total_tokens": 9500
+}

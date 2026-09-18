@@ -1,0 +1,7 @@
+{
+  "_source": "来源：源码推导（非真实录制）。Gemini 风格命名超集用例（当前 11 引擎无一发射此形状，归一化器前瞻支持）：cachedContentTokenCount 嵌在 promptTokenCount 内，须折出 disjoint。",
+  "promptTokenCount": 12000,
+  "candidatesTokenCount": 500,
+  "cachedContentTokenCount": 9000,
+  "totalTokenCount": 12500
+}

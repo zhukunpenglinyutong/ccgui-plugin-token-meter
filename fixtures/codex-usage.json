@@ -1,0 +1,9 @@
+{
+  "_source": "来源：源码推导（非真实录制）。codex_usage.rs:86-89 — rollout token_usage_record 的 payload.usage 逐响应透传；字段形状见 codex_usage.rs:171-177 测试字面量。cached_input_tokens/cache_write_input_tokens 嵌在 input_tokens 内（total_tokens = input + output），须折出 disjoint。",
+  "input_tokens": 8000,
+  "cached_input_tokens": 6000,
+  "cache_write_input_tokens": 1500,
+  "output_tokens": 300,
+  "total_tokens": 8300,
+  "model_context_window": 258400
+}

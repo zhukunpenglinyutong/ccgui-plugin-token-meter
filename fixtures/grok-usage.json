@@ -1,0 +1,6 @@
+{
+  "_source": "来源：源码推导（非真实录制）。grok.rs:101-102 — end 事件透传 usage；grok 不发独立 usage 事件，只经 usage://done 上报。xAI API 为 OpenAI 兼容命名。",
+  "prompt_tokens": 2100,
+  "completion_tokens": 350,
+  "total_tokens": 2450
+}
