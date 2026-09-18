@@ -1,16 +1,16 @@
 {
   "id": "token-meter",
   "name": "Token 速度表",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "sdkVersion": "^0.3",
   "minAppVersion": "1.0.4",
   "author": "zhukunpenglinyutong",
-  "description": "composer 状态行实时显示 token 输出速度与缓存命中率（仿 deepseek-harness StatsPills），支持全部 11 个 CLI 引擎（claude/codex/kimi/grok/pi/omp/dsh/agy/opencode/qoder/qoder-cn）。",
+  "description": "composer 状态行实时显示 token 输出速度与缓存命中率，支持全部 11 个 CLI 引擎。",
   "repo": "zhukunpenglinyutong/ccgui-plugin-token-meter",
   "license": "MIT",
   "keywords": ["token", "speed", "cache", "usage", "metrics"],
   "tier": "js",
-  "permissions": ["events", "ui:composer-status", "theme", "storage"],
+  "permissions": ["events", "ui:composer-status", "storage"],
   "configSchema": {
     "type": "object",
     "properties": {
