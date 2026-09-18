@@ -6,7 +6,7 @@
  * 插件仓用法（包未发布 npm 前的过渡方案）：复制本文件为插件仓的
  * `src/ccgui-plugin.d.ts`，首行版本戳必须与所用宿主 SDK 一致。
  *
- * @ccgui/plugin-sdk v0.3.9
+ * @ccgui/plugin-sdk v0.3.10
  */
 
 /** 宿主实现的 SDK 契约版本。 */
@@ -237,6 +237,10 @@ export interface PluginContext {
      *  插件绕过宿主直写会话数据（如 sqlite custom_title、转录 title 行）后
      *  调用——否则变更要等用户手动同步或下次常规刷新才可见。 */
     refresh(): Promise<void>;
+    /** 修改已有会话的 effort 档位，0.3.10 起。直写宿主会话状态并持久化
+     *  （等价于用户在会话内切换档位，refreshSessions 不会回滚）。未知会话
+     *  或空 effort 以 rejection 失败——不会创建幽灵会话条目。 */
+    setEffort(engine: string, sessionId: string, workspacePath: string, effort: string): Promise<void>;
     registerSource(def: {
       /** 源 id,插件内唯一;同 id 重复登记覆盖(热重载语义)。 */
       id: string;

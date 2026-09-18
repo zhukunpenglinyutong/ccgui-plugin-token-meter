@@ -3,7 +3,7 @@
   "name": "Token 速度表",
   "version": "0.1.1",
   "sdkVersion": "^0.3",
-  "minAppVersion": "1.0.5",
+  "minAppVersion": "1.0.4",
   "author": "zhukunpenglinyutong",
   "description": "composer 状态行实时显示 token 输出速度与缓存命中率（仿 deepseek-harness StatsPills），支持全部 11 个 CLI 引擎（claude/codex/kimi/grok/pi/omp/dsh/agy/opencode/qoder/qoder-cn）。",
   "repo": "zhukunpenglinyutong/ccgui-plugin-token-meter",
