@@ -82,6 +82,16 @@ fixture 形状全部从宿主 Rust 发射点源码推导（逐字段对齐，文
 - bundle 20.7KB 单文件 ESM，零外部 import（React 用宿主 ctx.react，
   lucide 图标 path 手工内联，ISC 许可）。
 
+## 界面
+
+![composer 状态行 chip：左亮色（速度面板）·右深色（用量面板）](docs/screenshot-1.png)
+
+截图由 `preview/` 视觉验证页渲染真实 chip/面板（罐头聚合器数据）生成：
+
+```bash
+pnpm exec vite build --config preview/vite.config.ts
+```
+
 ## 开发
 
 ```bash

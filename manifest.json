@@ -7,6 +7,8 @@
   "author": "zhukunpenglinyutong",
   "description": "composer 状态行实时显示 token 输出速度与缓存命中率，支持全部 11 个 CLI 引擎。",
   "repo": "zhukunpenglinyutong/ccgui-plugin-token-meter",
+  "icon": "docs/icon.png",
+  "screenshots": ["docs/screenshot-1.png"],
   "license": "MIT",
   "keywords": ["token", "speed", "cache", "usage", "metrics"],
   "tier": "js",
