@@ -21,7 +21,7 @@ deepseek-harness 的 StatsPills 口径，支持宿主全部 11 个 CLI 引擎。
   自动省略缓存段）
 
 点击 pill 弹出详情面板（ESC / 点外部关闭）：速度面板列 轮 / 步 /
-模型用时估算 / 瞬时速度（EWMA）/ 会话均速；用量面板列 未缓存输入 /
+生成耗时 / 瞬时速度（EWMA）/ 会话均速；用量面板列 未缓存输入 /
 缓存读取 / 缓存写入 / 输出 / 总计。
 
 配置（宿主设置页 → 插件 → Token 速度表，改完即生效）：
@@ -40,10 +40,17 @@ deepseek-harness 的 StatsPills 口径，支持宿主全部 11 个 CLI 引擎。
   语义逐条复制宿主 `src/features/chat/usage.ts` 的 parseUsage 再扩超集。
 - **缓存命中率** = cacheRead / (input + cacheRead + cacheWrite)；分母为 0
   隐藏；百分比取仍舍入 <100 的最小精度（照 StatsPills）。
-- **tok/s** = 相邻两报告的 Δoutput/Δt（t 取 payload.ts，缺省回退到达
+- **tok/s** = 报告 Δoutput / 生成窗口：宿主实测窗口优先（SDK 0.3.15
+  起的 payload.genMs——从响应流打开到关闭，工具执行、用户等待与轮间隔
+  都不计入），缺失时回退相邻两报告 Δt（t 取 payload.ts，再缺省回退到达
   时间），EWMA α=0.3 平滑；done 事件冻结（停止衰减）；running 期间无新
-  报告时 10s 线性衰减到 0；单报告轮（无 EWMA 样本）回退会话均速
-  Σoutput/(lastTs−firstTs)，再不行显示「—」。
+  报告时 10s 线性衰减到 0。单报告轮带 genMs 时直接出样本（claude 一轮
+  一条因此也有瞬时速度），无 genMs 才回退会话均速，再不行显示「—」。
+- **会话均速** = Σoutput / ΣgenMs（只计带实测窗口的报告）；无任何实测
+  窗口（旧宿主 / 未计时报告）回退 Σoutput/(lastTs−firstTs)——后者含工具
+  执行与轮间用户等待，会把速度系统性拉低，仅供过渡展示。
+- **生成耗时** = ΣgenMs（模型真实生成时间）；无实测窗口时回退首末报告
+  跨度（含工具与等待），字段同源故两者不会混算。
 - **步** = 计入的用量报告数（一报告 ≈ 一次模型响应；claude 一轮只报一次
   轮汇总，故其步数 = 轮数）；**轮** = 去重 runId 数。
 - **双报去重**：grok 只经 `usage://done` 上报 → 无条件计入；其它引擎的
@@ -68,6 +75,11 @@ deepseek-harness 的 StatsPills 口径，支持宿主全部 11 个 CLI 引擎。
 
 fixture 形状全部从宿主 Rust 发射点源码推导（逐字段对齐，文件头 `_source`
 标明出处），非真实录制。
+
+genMs 由宿主统一计时：claude 取 SSE `message_start`/`message_stop`，
+pi/omp 取 rpc `message_start` 到 `message_end`（usage），其余引擎按流式
+文本/思考 delta 开窗、工具行或 usage 收窗。宿主计时缺失时插件自动回退
+旧口径，无需版本门槛。
 
 ## 性能设计
 

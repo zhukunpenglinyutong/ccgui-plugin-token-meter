@@ -18,6 +18,9 @@ export interface EngineEventPayloadLike {
   kind: string;
   data: unknown;
   ts?: number;
+  /** 宿主实测生成窗口（毫秒，SDK 0.3.15 起）：该报告对应的模型真实生成
+   *  时间，工具执行与等待不计入。缺失时回退相邻报告 ts 间隔。 */
+  genMs?: number;
 }
 
 export interface MeterConfig {
@@ -54,7 +57,11 @@ interface SessionAgg {
   sumOutput: number;
   sumCacheRead: number;
   sumCacheWrite: number;
-  /** 会话级均速口径：Σoutput / (lastTs - firstTs)。 */
+  /** 带宿主实测窗口的报告累计输出（生成口径均速的分子）。 */
+  genOutput: number;
+  /** 生成窗口合计（毫秒）；> 0 时模型用时与均速都走实测口径。 */
+  genMs: number;
+  /** 会话级均速口径（无实测窗口时的回退）：Σoutput / (lastTs - firstTs)。 */
   firstTs: number | null;
   lastTs: number | null;
   /** 当前活跃 run 的 EWMA 基线：上次报告时刻与该 run 已累计的输出。 */
@@ -84,7 +91,7 @@ export interface MeterSnapshot {
   /** 冻结前的 EWMA 与均速，面板用。 */
   ewmaTps: number | null;
   avgTps: number | null;
-  /** 模型用时估算（首末报告间隔 ms）；null = 样本不足。 */
+  /** 模型用时（毫秒）：Σ宿主实测生成窗口；无实测时回退首末报告跨度。 */
   modelMs: number | null;
   input: number;
   output: number;
@@ -157,16 +164,31 @@ export class UsageAggregator {
     const agg = this.aggFor(event);
     const ts = typeof event.ts === "number" ? event.ts : this.now();
     const mode = countingMode(event.engine, event.data);
+    // 宿主实测生成窗口：工具执行、用户等待与轮间隔都已排除。缺失时
+    // 回退相邻报告 ts 间隔（旧宿主 / 未计时的报告）。
+    const genMs =
+      typeof event.genMs === "number" && Number.isFinite(event.genMs) && event.genMs > 0
+        ? event.genMs
+        : null;
 
     if (mode === "cumulative-replace") {
       const snapRaw = (event.data as Record<string, unknown>).total_token_usage;
       const snap = normalizeUsage(snapRaw);
       if (snap) {
         // 快照替换：会话累计口径下 Δoutput 驱动 EWMA，总量直接替换。
+        // 首帧无法得出 Δ（快照是会话累计值），不产生样本。
         const prev = agg.lastSnapshot;
-        if (prev && agg.lastSnapshotTs !== null && ts > agg.lastSnapshotTs) {
+        if (prev) {
           const dOut = snap.output - prev.output;
-          if (dOut > 0) this.applyEwma(agg, dOut, ts - agg.lastSnapshotTs);
+          if (dOut > 0) {
+            if (genMs !== null) {
+              this.applyEwma(agg, dOut, genMs);
+              agg.genMs += genMs;
+              agg.genOutput += dOut;
+            } else if (agg.lastSnapshotTs !== null && ts > agg.lastSnapshotTs) {
+              this.applyEwma(agg, dOut, ts - agg.lastSnapshotTs);
+            }
+          }
         }
         agg.sumInput = snap.input;
         agg.sumOutput = snap.output;
@@ -183,7 +205,7 @@ export class UsageAggregator {
       const parsed = normalizeUsage(event.data);
       if (parsed) {
         if (agg.activeRunId !== event.runId) {
-          // 新 run：重置 EWMA 基线（首报告无 Δ，不产生样本）。
+          // 新 run：重置 EWMA 基线（无实测窗口时首报告无 Δ，不产生样本）。
           agg.activeRunId = event.runId;
           agg.runOutput = 0;
           agg.runLastTs = null;
@@ -193,7 +215,13 @@ export class UsageAggregator {
         agg.sumCacheRead += parsed.cacheRead;
         agg.sumCacheWrite += parsed.cacheWrite;
         agg.runOutput += parsed.output;
-        if (agg.runLastTs !== null && ts > agg.runLastTs) {
+        if (genMs !== null && parsed.output > 0) {
+          // 实测窗口存在：无需等第二条报告，单报告轮（claude 一轮一条）
+          // 也直接出样本，且分母不含工具时间。
+          agg.genMs += genMs;
+          agg.genOutput += parsed.output;
+          this.applyEwma(agg, parsed.output, genMs);
+        } else if (agg.runLastTs !== null && ts > agg.runLastTs) {
           // 基线差 = 上次报告至今的 Δoutput（本次报告量）。
           this.applyEwma(agg, parsed.output, ts - agg.runLastTs);
         }
@@ -301,6 +329,8 @@ export class UsageAggregator {
       sumOutput: 0,
       sumCacheRead: 0,
       sumCacheWrite: 0,
+      genOutput: 0,
+      genMs: 0,
       firstTs: null,
       lastTs: null,
       activeRunId: null,
@@ -408,6 +438,9 @@ export class UsageAggregator {
   }
 
   private avgTps(agg: SessionAgg): number | null {
+    // 实测口径优先：Σoutput / Σ生成窗口（工具执行与等待不在分母里）。
+    if (agg.genMs > 0 && agg.genOutput > 0) return agg.genOutput / (agg.genMs / 1000);
+    // 旧宿主 / 无可测窗口：回退首末报告墙钟跨度（含工具与等待）。
     if (agg.firstTs === null || agg.lastTs === null || agg.lastTs <= agg.firstTs) return null;
     if (agg.sumOutput <= 0) return null;
     return agg.sumOutput / ((agg.lastTs - agg.firstTs) / 1000);
@@ -454,7 +487,11 @@ export class UsageAggregator {
         tps,
         ewmaTps: agg.ewmaTps,
         avgTps: avg,
-        modelMs: agg.firstTs !== null && agg.lastTs !== null ? agg.lastTs - agg.firstTs : null,
+        modelMs: agg.genMs > 0
+          ? agg.genMs
+          : agg.firstTs !== null && agg.lastTs !== null
+            ? agg.lastTs - agg.firstTs
+            : null,
         input: agg.sumInput,
         output: agg.sumOutput,
         cacheRead: agg.sumCacheRead,
@@ -480,7 +517,9 @@ export class UsageAggregator {
       tpsAny = false,
       running = false,
       ewmaSum = 0,
-      ewmaAny = false;
+      ewmaAny = false,
+      genOutput = 0,
+      genMs = 0;
     let firstTs: number | null = null;
     let lastTs: number | null = null;
     for (const agg of this.sessions.values()) {
@@ -490,6 +529,8 @@ export class UsageAggregator {
       output += agg.sumOutput;
       cacheRead += agg.sumCacheRead;
       cacheWrite += agg.sumCacheWrite;
+      genOutput += agg.genOutput;
+      genMs += agg.genMs;
       const tps = this.displayTps(agg, nowMs);
       if (tps !== null) {
         tpsSum += tps;
@@ -505,9 +546,11 @@ export class UsageAggregator {
     }
     const total = input + output + cacheRead + cacheWrite;
     const avg =
-      firstTs !== null && lastTs !== null && lastTs > firstTs && output > 0
-        ? output / ((lastTs - firstTs) / 1000)
-        : null;
+      genMs > 0 && genOutput > 0
+        ? genOutput / (genMs / 1000)
+        : firstTs !== null && lastTs !== null && lastTs > firstTs && output > 0
+          ? output / ((lastTs - firstTs) / 1000)
+          : null;
     return {
       ...base,
       empty: total === 0 && steps === 0,
@@ -517,7 +560,11 @@ export class UsageAggregator {
       tps: tpsAny ? tpsSum : avg,
       ewmaTps: ewmaAny ? ewmaSum : null,
       avgTps: avg,
-      modelMs: firstTs !== null && lastTs !== null ? lastTs - firstTs : null,
+      modelMs: genMs > 0
+        ? genMs
+        : firstTs !== null && lastTs !== null
+          ? lastTs - firstTs
+          : null,
       input,
       output,
       cacheRead,

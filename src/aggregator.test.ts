@@ -19,8 +19,9 @@ function usage(
   ts: number,
   engine = "pi",
   sessionId = "s1",
+  genMs?: number,
 ): EngineEventPayloadLike {
-  return { runId, sessionId, engine, seq: 0, kind: "usage", data, ts } as EngineEventPayloadLike;
+  return { runId, sessionId, engine, seq: 0, kind: "usage", data, ts, genMs } as EngineEventPayloadLike;
 }
 
 function done(
@@ -142,8 +143,60 @@ describe("UsageAggregator", () => {
     const agg = makeAgg();
     agg.onUsageEvent(usage("r1", { input: 0, output: 100 }, 10_000));
     flush();
-    // 只有一个 ts 点：无均速（lastTs == firstTs）→ null。
+    // 只有一个 ts 点且无宿主实测窗口：无均速（lastTs == firstTs）→ null。
     expect(agg.getSnapshot().tps).toBeNull();
+    agg.dispose();
+  });
+
+  it("genMs 单报告即成样本：claude 一轮一条也有瞬时速度", () => {
+    const agg = makeAgg();
+    const event = done("r1", claude, 10_000, "claude");
+    event.genMs = 2_000;
+    agg.onDoneEvent(event);
+    flush();
+    const snap = agg.getSnapshot();
+    expect(snap.ewmaTps).toBeCloseTo(150, 5); // claude fixture output 300 / 2s
+    expect(snap.avgTps).toBeCloseTo(150, 5);
+    expect(snap.modelMs).toBe(2_000);
+    // 未 run 后冻结在最后样本上。
+    expect(snap.tps).toBeCloseTo(150, 5);
+    agg.dispose();
+  });
+
+  it("genMs 排除工具与等待：均速按生成窗口而非墙钟", () => {
+    const agg = makeAgg();
+    // 相邻报告相隔 60s（工具执行 + 用户等待），实测生成窗口 8s / 12s。
+    agg.onUsageEvent(usage("r1", { input: 0, output: 1_000 }, 10_000, "pi", "s1", 8_000));
+    agg.onUsageEvent(usage("r1", { input: 0, output: 1_000 }, 70_000, "pi", "s1", 12_000));
+    flush();
+    const snap = agg.getSnapshot();
+    // 2000 tok / 20s 生成窗口，而非 2000 / 60s 墙钟。
+    expect(snap.avgTps).toBeCloseTo(100, 5);
+    // 1000/8 = 125 → 0.3 * (1000/12) + 0.7 * 125。
+    expect(snap.ewmaTps).toBeCloseTo(0.3 * (1_000 / 12) + 0.7 * 125, 5);
+    expect(snap.modelMs).toBe(20_000);
+    agg.dispose();
+  });
+
+  it("无 genMs 时保留墙钟回退口径（旧宿主行为）", () => {
+    const agg = makeAgg();
+    agg.onUsageEvent(usage("r1", { input: 0, output: 1_000 }, 10_000));
+    agg.onUsageEvent(usage("r1", { input: 0, output: 1_000 }, 70_000));
+    flush();
+    const snap = agg.getSnapshot();
+    expect(snap.avgTps).toBeCloseTo(2_000 / 60, 5);
+    expect(snap.modelMs).toBe(60_000);
+    agg.dispose();
+  });
+
+  it("genMs 只计有输出的报告：input 快照不撑大生成窗口", () => {
+    const agg = makeAgg();
+    agg.onUsageEvent(usage("r1", { input: 5_000, output: 0 }, 10_000, "kimi", "s1", 9_000));
+    agg.onUsageEvent(usage("r1", { input: 0, output: 500 }, 20_000, "kimi", "s1", 5_000));
+    flush();
+    const snap = agg.getSnapshot();
+    expect(snap.avgTps).toBeCloseTo(100, 5); // 500 / 5s
+    expect(snap.modelMs).toBe(5_000);
     agg.dispose();
   });
 
@@ -204,6 +257,28 @@ describe("UsageAggregator", () => {
     expect(snap.cacheRead).toBe(45_000);
     // Δoutput 2000 / 10s → inst 200，EWMA 首样本即 200。
     expect(snap.ewmaTps).toBeCloseTo(200, 5);
+    agg.dispose();
+  });
+
+  it("cumulative-replace + genMs：Δoutput 按实测窗口而非快照间隔", () => {
+    const agg = makeAgg();
+    agg.onUsageEvent(usage("r1", codexCumulative, 10_000, "codex"));
+    const bigger = {
+      total_token_usage: {
+        input_tokens: 60_000,
+        cached_input_tokens: 45_000,
+        output_tokens: 5_000,
+        total_tokens: 65_000,
+      },
+      last_token_usage: { input_tokens: 10_000, output_tokens: 2_000 },
+    };
+    // 快照间隔 10s（含工具），实测生成窗口 4s → 2000 / 4s = 500。
+    agg.onUsageEvent(usage("r1", bigger, 20_000, "codex", "s1", 4_000));
+    flush();
+    const snap = agg.getSnapshot();
+    expect(snap.ewmaTps).toBeCloseTo(500, 5);
+    expect(snap.avgTps).toBeCloseTo(500, 5);
+    expect(snap.modelMs).toBe(4_000);
     agg.dispose();
   });
 
